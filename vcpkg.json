@@ -1,0 +1,13 @@
+{
+  "name": "pizza",
+  "version": "1.0",
+  "dependencies": [
+    {
+      "name": "imgui",
+      "features": ["glfw-binding", "opengl3-binding"]
+    },
+    "glad",
+    "glfw3",
+    "cereal"
+  ]
+}
