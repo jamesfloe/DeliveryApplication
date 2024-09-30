@@ -23,10 +23,14 @@ bool nameOrPassNoExist{ false };
 bool showEmployeeDetailsWin{ false };
 bool showDeliveryCreationWin{ false };
 bool showItemManagerWin{ false };
+bool createItemPopUp{ false };
+bool showItemDetails{ false };
 std::string employeeCreationBuffer{ "enter new Username here" };
 std::string passwordCreationBuffer{ "enter new Password here" };
 std::string loginUserNameBuffer{ "enter Username" };
 std::string loginPasswordBuffer{ "enter password" };
+std::string itemNameBuffer{ "enter item Name" };
+std::string itemPriceBuffer{ "enter item price" };
 static const char* currentListEmployee{ NULL };
 static int employeeListIdx;
 static const char* currentEmployee{ NULL };
@@ -34,6 +38,8 @@ static int employeeIdx;
 static const char* currentListDelivery{ NULL };
 static int listDeliveryIdx;
 static int listItemIdx;
+static int listSubItemIdx;
+static const char* currentListItemDetails{ NULL };
 static const char* currentListItem{ NULL };
 
 void glVertexBufferInt()
@@ -62,22 +68,20 @@ void UseImGUI::NewFrame()
 void UseImGUI::Update(ImGuiIO& io)
 {
     //Employees Window
+    ImGui::SetNextWindowPos(ImVec2(0, 0));
+    ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x / 4, io.DisplaySize.y));
     ImGui::Begin("Employees", 0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoFocusOnAppearing);
-    ImGui::SetCursorPos(ImVec2(0, 0));
-    ImGui::SetWindowPos(ImVec2(0,0));
-    ImGui::SetWindowSize(ImVec2(io.DisplaySize.x / 4, io.DisplaySize.y));
-    if (ImGui::BeginListBox("Employees", ImVec2(ImGui::GetWindowWidth(), ImGui::GetWindowHeight() / 4)))
-        std::cout << "shit" << std::endl;
+    ImGui::BeginListBox("Employees", ImVec2(ImGui::GetWindowWidth(), ImGui::GetWindowHeight() / 4));
     for (int n = 0; n < Employee::loggedInEmployees.size(); n++)
     {
-        bool is_selected = (currentListEmployee == Employee::loggedInEmployees[n].m_name.c_str()); 
+        bool is_selected = (currentListEmployee == Employee::loggedInEmployees[n].m_name.c_str());
         if (ImGui::Selectable(Employee::loggedInEmployees[n].m_name.c_str(), is_selected)) {
             currentListEmployee = Employee::loggedInEmployees[n].m_name.c_str();
             employeeListIdx = n;
         }
         if (is_selected) {
             ImGui::SetItemDefaultFocus();
-        }  
+        }
     }
     ImGui::EndListBox();
 
@@ -122,8 +126,8 @@ void UseImGUI::Update(ImGuiIO& io)
     ImGui::End();
 
     ImGui::Begin("Employee Settings", 0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoFocusOnAppearing);
-    ImGui::SetWindowPos(ImVec2(io.DisplaySize.x / 4, (io.DisplaySize.y*2)/3));
-    ImGui::SetWindowSize(ImVec2((io.DisplaySize.x / 4)*3, io.DisplaySize.y/3));
+    ImGui::SetWindowPos(ImVec2(io.DisplaySize.x / 4, (io.DisplaySize.y * 2) / 3));
+    ImGui::SetWindowSize(ImVec2((io.DisplaySize.x / 4) * 3, io.DisplaySize.y / 3));
     if (ImGui::Button("Create new Employee Account"))
         showEmployeeCreationWindow = true;
     if (ImGui::Button("Delete existing Employee Account"))
@@ -132,17 +136,17 @@ void UseImGUI::Update(ImGuiIO& io)
 
     //Map Window
     ImGui::Begin("Map Settings", 0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoFocusOnAppearing);
-    ImGui::SetWindowPos(ImVec2(io.DisplaySize.x / 4, io.DisplaySize.y/3));
-    ImGui::SetWindowSize(ImVec2((io.DisplaySize.x / 4) * 3, io.DisplaySize.y/3));
+    ImGui::SetWindowPos(ImVec2(io.DisplaySize.x / 4, io.DisplaySize.y / 3));
+    ImGui::SetWindowSize(ImVec2((io.DisplaySize.x / 4) * 3, io.DisplaySize.y / 3));
     ImGui::End();
 
     //Restaurant Settings
     ImGui::Begin("Restaurant Settings", 0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoFocusOnAppearing);
     ImGui::SetWindowPos(ImVec2(io.DisplaySize.x / 4, 0));
-    ImGui::SetWindowSize(ImVec2((io.DisplaySize.x / 4) * 3, io.DisplaySize.y/3));
+    ImGui::SetWindowSize(ImVec2((io.DisplaySize.x / 4) * 3, io.DisplaySize.y / 3));
     if (ImGui::Button("Create New Delivery"))
         showDeliveryCreationWin = true;
-    if (ImGui::Button("Manage Delivery Items")) 
+    if (ImGui::Button("Manage Delivery Items"))
         showItemManagerWin = true;
     ImGui::End();
 
@@ -166,9 +170,9 @@ void UseImGUI::Update(ImGuiIO& io)
                 Employee::SerealizeEmployees(Employee::allEmployees);
                 showCredentialCreated = true;
             }
-            else{
-              showCredentialExists = true;
-              showCredentialCreated = false;
+            else {
+                showCredentialExists = true;
+                showCredentialCreated = false;
             }
         }
         if (showCredentialExists) {
@@ -243,9 +247,12 @@ void UseImGUI::Update(ImGuiIO& io)
 
     //Item Manager Window
     if (showItemManagerWin) {
+        ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x / 3, 0));
+        ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x / 2, io.DisplaySize.y));
         ImGui::Begin("Item Management", &showItemManagerWin, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
         ImGui::Text("Items");
-        ImGui::BeginListBox("", ImVec2(ImGui::GetWindowWidth() / 2, ImGui::GetWindowHeight() / 1.5));
+        ImGui::BeginChild("itemListChild", ImVec2(ImGui::GetWindowWidth() / 3, ImGui::GetWindowHeight() / 1.5));
+        ImGui::BeginListBox("##something");
         for (int n = 0; n < Item::allItems.size(); n++)
         {
             bool is_selected = (currentListItem == Item::allItems[n].m_name.c_str());
@@ -258,9 +265,72 @@ void UseImGUI::Update(ImGuiIO& io)
             }
         }
         ImGui::EndListBox();
-        if (ImGui::Button("Delete Item")) {
-            Item::allItems.erase(Item::allItems.begin() + listItemIdx);
+        ImGui::EndChild();
+
+        if (showItemDetails) {
+            ImGui::Text("Sub-options");
+            ImGui::SetCursorPos(ImVec2(ImGui::GetWindowWidth() / 2, ImGui::GetWindowHeight() / 8));
+            ImGui::BeginChild("itemListChildDetails", ImVec2(ImGui::GetWindowWidth() / 3, ImGui::GetWindowHeight() / 1.5));
+            ImGui::BeginListBox("##something");
+            for (int n = 0; n < Item::allItems[listItemIdx].childItemVector.size(); n++)
+            {
+                bool is_selected = (currentListItemDetails == Item::allItems[listItemIdx].childItemVector[n].m_name.c_str());
+                if (ImGui::Selectable(Item::allItems[listItemIdx].childItemVector[n].m_name.c_str(), is_selected)) {
+                    currentListItemDetails = Item::allItems[listItemIdx].childItemVector[n].m_name.c_str();
+                    listSubItemIdx = n;
+                }
+                if (is_selected) {
+                    ImGui::SetItemDefaultFocus();
+                }
+            }
+            ImGui::EndListBox();
+            ImGui::EndChild();
         }
+        if (ImGui::Button("Create New Item")) {
+            createItemPopUp = true;
+        }
+
+        if (createItemPopUp) {
+            ImGui::InputText("Enter Item Name", &itemNameBuffer, 0, MyResizeCallback);
+            ImGui::InputText("Enter Item Price", &itemPriceBuffer, 0, MyResizeCallback);
+
+            if (ImGui::Button("Create")) {
+                //Create new item object and save to disk.
+                Item tObj(itemNameBuffer, std::stof(itemPriceBuffer));
+                if (!tObj.CheckIfCredentialsExist(tObj, Item::allItems)) {
+                    showCredentialExists = false;
+                    Item::allItems.push_back(tObj);
+                    Item::SerealizeItems(Item::allItems);
+                    showCredentialCreated = true;
+                }
+                else {
+                    showCredentialExists = true;
+                    showCredentialCreated = false;
+                }
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Close")) {
+                createItemPopUp = false;
+            }
+            ImGui::SameLine();
+            if (showCredentialExists) {
+                ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Item already exists");
+            }
+            ImGui::SameLine();
+            if (showCredentialCreated) {
+                ImGui::TextColored(ImVec4(0.18f, 1.0f, 0.0f, 1.0f), "Item created");
+            }
+        }
+
+        ImGui::BeginGroup();
+        if (ImGui::Button("Show Item Details")) {
+            showEmployeeDetailsWin = true;
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Delete Item")) {
+            //Delete selected item from disk and memory.
+        }
+        ImGui::EndGroup();
         ImGui::End();
     }
 

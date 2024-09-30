@@ -38,7 +38,7 @@ bool Item::operator==(Item x)
 void Item::DeserealizeItemsToVec(std::vector<Item>& vecOfItems)
 {
     std::vector<Item> tempItems;
-    std::ifstream input{ "record.bin" };
+    std::ifstream input{ "record1.bin" };
     cereal::BinaryInputArchive archive{ input };
     archive(tempItems);
     vecOfItems = tempItems;
@@ -46,7 +46,7 @@ void Item::DeserealizeItemsToVec(std::vector<Item>& vecOfItems)
 
 void Item::SerealizeItems(std::vector<Item>& vecOfItems)
 {
-    std::ofstream os("record.bin", std::ios::binary);
+    std::ofstream os("record1.bin", std::ios::binary);
     cereal::BinaryOutputArchive archive(os);
     archive(vecOfItems);
 };

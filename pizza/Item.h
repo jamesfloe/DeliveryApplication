@@ -28,5 +28,5 @@ public:
 template<class Archive>
 void serialize(Archive& archive, Item& item)
 {
-	archive(item.m_name, item.m_price);
+	archive(item.m_name, item.m_price, item.childItemVector);
 }

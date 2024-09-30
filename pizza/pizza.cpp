@@ -32,6 +32,7 @@ int main()
 	UseImGUI myimgui;
 	myimgui.Init(window, glsl_version);
 	Employee::DeserealizeEmployeesToVec(Employee::allEmployees);
+	Item::DeserealizeItemsToVec(Item::allItems);
 
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();

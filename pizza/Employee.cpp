@@ -39,7 +39,7 @@ void Employee::DeserealizeEmployeesToVec(std::vector<Employee>& vecOfEmployees)
     if (vecOfEmployees.size() == 0)
         return;
     std::vector<Employee> tempEmployees;
-    std::ifstream input{ "record.bin" };
+    std::ifstream input{ "record0.bin" };
     cereal::BinaryInputArchive archive{ input };
     archive(tempEmployees);
     vecOfEmployees = tempEmployees;
@@ -47,7 +47,7 @@ void Employee::DeserealizeEmployeesToVec(std::vector<Employee>& vecOfEmployees)
 
 void Employee::SerealizeEmployees(std::vector<Employee>& vecOfEmployees)
 {
-    std::ofstream os("record.bin", std::ios::binary);
+    std::ofstream os("record0.bin", std::ios::binary);
     cereal::BinaryOutputArchive archive(os);
     archive(vecOfEmployees);
 };
