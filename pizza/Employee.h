@@ -23,7 +23,14 @@ public:
 	std::vector<Delivery> AssignedDeliveries;
 	static std::vector<Employee> loggedInEmployees;
 	static std::vector<Employee> allEmployees;
-	
+	enum employeeState {
+		none = 0,
+		exists = 1,
+		created = 2,
+		deleted = 3,
+		reEnter = 4
+	};
+	static employeeState empStat;
 	bool CheckIfCredentialsExist(Employee tObj, std::vector<Employee> vecOfEmployees);
 	static void DeserealizeEmployeesToVec(std::vector<Employee>& vecOfEmployees);
 	static void SerealizeEmployees(std::vector<Employee>& vecOfEmployees);

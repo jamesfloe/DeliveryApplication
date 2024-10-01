@@ -15,7 +15,15 @@ public:
 	std::vector<Item> childItemVector;
 	static std::vector<Item> allItems;
 	static std::vector<Item> currentItems;
-
+	enum itemState {
+		none = 0,
+		exists = 1,
+		created = 2,
+		deleted = 3,
+		reEnter = 4
+	};
+	static itemState optionStat;
+	static itemState itemStat;
 	bool CheckIfCredentialsExist(Item tObj, std::vector<Item> vecOfItems);
 	static void DeserealizeItemsToVec(std::vector<Item>& vecOfItems);
 	static void SerealizeItems(std::vector<Item>& vecOfItems);

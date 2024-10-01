@@ -11,6 +11,8 @@
 
 std::vector<Item> Item::allItems;
 std::vector<Item> Item::currentItems;
+Item::itemState Item::itemStat;
+Item::itemState Item::optionStat;
 
 bool Item::CheckIfCredentialsExist(Item tObj, std::vector<Item> vecOfItems)
 {

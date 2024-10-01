@@ -3,6 +3,7 @@
 #include<imgui.h>
 #include <string>
 #include <fstream>
+#include <algorithm>
 
 static void glfw_error_callback(int error, const char* description) {
 	throw("glfw error");
@@ -21,4 +22,10 @@ static int MyResizeCallback(ImGuiInputTextCallbackData* data)
         data->Buf = my_str->begin();
     }
     return 0;
+}
+
+static bool isNumberAndPeriod(const std::string& str) {
+    return std::all_of(str.begin(), str.end(), [](char c) {
+        return (c >= '0' && c <= '9') || (c == '.');
+        });
 }
