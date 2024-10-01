@@ -13,7 +13,16 @@
 #include <cereal/types/vector.hpp>
 #include <cereal/types/string.hpp>
 
-
+enum msgState {
+    none = 0,
+    exists = 1,
+    created = 2,
+    deleted = 3,
+    reEnter = 4
+};
+msgState itemMsg;
+msgState empMsg;
+msgState optMsg;
 bool showEmployeeCreationWindow{ false };
 bool showEmployeeCredentialExists{ false };
 bool showEmployeeCredentialCreated{ false };
@@ -166,7 +175,7 @@ void UseImGUI::Update(ImGuiIO& io)
     if (!showEmployeeCreationWindow) {
         showEmployeeCredentialExists = false;
         showEmployeeCredentialCreated = false;
-        Employee::empStat = 0;
+        empMsg = none;
     }
     if (showEmployeeCreationWindow) {
         ImGui::Begin("Create New Employee", &showEmployeeCreationWindow, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
@@ -178,20 +187,19 @@ void UseImGUI::Update(ImGuiIO& io)
         if (ImGui::Button("Create", ImVec2(ImGui::GetWindowSize().x / 5, ImGui::GetWindowSize().y / 10))) {
             Employee tObj{ employeeCreationBuffer, passwordCreationBuffer, 0 };
             if (!tObj.CheckIfCredentialsExist(tObj, Employee::allEmployees)) {
-                showEmployeeCredentialExists = false;
+                empMsg = none;
                 Employee::allEmployees.push_back(tObj);
                 Employee::SerealizeEmployees(Employee::allEmployees);
-                showEmployeeCredentialCreated = true;
+                empMsg = created;
             }
             else {
-                showEmployeeCredentialExists = true;
-                showEmployeeCredentialCreated = false;
+                empMsg = exists;
             }
         }
-        if (showEmployeeCredentialExists) {
+        if (empMsg == exists) {
             ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "username already exists");
         }
-        if (showEmployeeCredentialCreated) {
+        if (empMsg == created) {
             ImGui::TextColored(ImVec4(0.18f, 1.0f, 0.0f, 1.0f), "employee created");
         }
         ImGui::End();
@@ -199,7 +207,7 @@ void UseImGUI::Update(ImGuiIO& io)
 
     //Employee Deletion Window
     if (!showEmployeeDeletionWindow)
-        showEmployeeIsDeleted = false;
+        empMsg = none;
     if (showEmployeeDeletionWindow) {
         ImGui::Begin("Delete Employee", &showEmployeeDeletionWindow, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
         ImGui::SetWindowPos(ImVec2(io.DisplaySize.x / 2, io.DisplaySize.y / 2));
@@ -222,9 +230,9 @@ void UseImGUI::Update(ImGuiIO& io)
         if (ImGui::Button("Delete", ImVec2(ImGui::GetWindowSize().x / 5, ImGui::GetWindowSize().y / 10))) {
             Employee::allEmployees.erase(Employee::allEmployees.begin() + employeeIdx);
             Employee::SerealizeEmployees(Employee::allEmployees);
-            showEmployeeIsDeleted = true;
+            empMsg = deleted;
         }
-        if (showEmployeeIsDeleted) {
+        if (empMsg == deleted) {
             ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Employee Deleted");
         }
         ImGui::End();
@@ -261,9 +269,8 @@ void UseImGUI::Update(ImGuiIO& io)
     //Item Manager Window
     if (showItemManagerWin == false) {
         showItemDetails = false;
-        showItemIsDeleted = false;
-        showItemEnterCorrectNum = false;
-        showOptionEnterCorrectNum = false;
+        itemMsg = none;
+        optMsg = none;
     }
     if (showItemManagerWin) {
         ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x / 3, 0));
@@ -271,6 +278,11 @@ void UseImGUI::Update(ImGuiIO& io)
         ImGui::Begin("Item Management", &showItemManagerWin, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
         ImGui::BeginChild("itemListChild", ImVec2(ImGui::GetWindowWidth() / 3, ImGui::GetWindowHeight()));
         ImGui::Text("Items");
+        ImGui::SameLine();
+        ImGui::SetCursorPosX(ImGui::GetWindowWidth() / 2);
+        std::string itemPrice{ "Item price is: " };
+        itemPrice = itemPrice + (Item::allItems.size() != 0 ? std::to_string(Item::allItems[listItemIdx].m_price): "");
+        ImGui::Text(itemPrice.c_str());
         ImVec2 prevListBoxHeight{ ImGui::GetWindowPos()}; // Used to set height of SubOptions childWindow
         ImGui::BeginListBox("##something", ImVec2(ImGui::GetWindowWidth() / 2, ImGui::GetWindowHeight() / 2));
         for (int n = 0; n < Item::allItems.size(); n++)
@@ -299,36 +311,34 @@ void UseImGUI::Update(ImGuiIO& io)
                 if (isNumberAndPeriod(itemPriceBuffer)) {
                     Item tObj(itemNameBuffer, std::stof(itemPriceBuffer));
                     if (!tObj.CheckIfCredentialsExist(tObj, Item::allItems)) {
-                        showItemCredentialExists = false;
+                        itemMsg = none;
                         Item::allItems.push_back(tObj);
                         Item::SerealizeItems(Item::allItems);
-                        showItemCredentialCreated = true;
+                        itemMsg = created;
                     }
                     else {
-                        showItemCredentialExists = true;
-                        showItemCredentialCreated = false;
+                        itemMsg = exists;
                     }
                 }
                 else {
-                    showItemEnterCorrectNum = true;
+                    itemMsg = reEnter;
                 }
             }
             ImGui::SameLine();
             if (ImGui::Button("Close")) {
                 createItemPopUp = false;
-                showItemCredentialCreated = false;
-                showItemCredentialExists = false;
+                itemMsg = none;
             }
             //ImGui::SameLine();
-            if (showItemCredentialExists) {
+            if (itemMsg == exists) {
                 ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Item already exists");
             }
             //ImGui::SameLine();
-            if (showItemCredentialCreated) {
+            if (itemMsg == created) {
                 ImGui::TextColored(ImVec4(0.18f, 1.0f, 0.0f, 1.0f), "Item created");
             }
             //ImGui::SameLine();
-            if (showItemEnterCorrectNum) {
+            if (itemMsg == reEnter) {
                 ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Please enter price correctly");
             }
         }
@@ -343,11 +353,11 @@ void UseImGUI::Update(ImGuiIO& io)
             if (Item::allItems.size() != 0) {
                 Item::allItems.erase(Item::allItems.begin() + listItemIdx);
                 Item::SerealizeItems(Item::allItems);
-                listItemIdx -= 1;
-                showItemIsDeleted = true;
+                listItemIdx > 0 ? listItemIdx -= 1 : listItemIdx = listItemIdx;
+                itemMsg = deleted;
             }
         }
-        if (showItemIsDeleted) {
+        if (itemMsg == deleted) {
             ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Item Deleted");
         }
         ImGui::EndGroup();
@@ -358,6 +368,11 @@ void UseImGUI::Update(ImGuiIO& io)
             ImGui::SetNextWindowSize(ImVec2(ImGui::GetWindowWidth() / 2, ImGui::GetWindowHeight()));
             ImGui::BeginChild("itemListChildDetails", ImVec2(ImGui::GetWindowWidth() / 3, ImGui::GetWindowHeight()));
             ImGui::Text("Sub-options");
+            ImGui::SameLine();
+            ImGui::SetCursorPosX(ImGui::GetWindowWidth() / 2);
+            std::string optionPrice{ "Option price is: " };
+            optionPrice = optionPrice + (Item::allItems[listItemIdx].childItemVector.size() != 0 ? std::to_string(Item::allItems[listItemIdx].childItemVector[listSubItemIdx].m_price) : "");
+            ImGui::Text(optionPrice.c_str());
             ImGui::BeginListBox("##something", ImVec2(ImGui::GetWindowWidth() / 2, ImGui::GetWindowHeight() / 2));
             for (int n = 0; n < Item::allItems[listItemIdx].childItemVector.size(); n++)
             {
@@ -384,60 +399,51 @@ void UseImGUI::Update(ImGuiIO& io)
                     if (isNumberAndPeriod(optionPriceBuffer)) {
                         Item tObj(optionNameBuffer, std::stof(optionPriceBuffer));
                         if (!tObj.CheckIfCredentialsExist(tObj, Item::allItems[listItemIdx].childItemVector)) {
-                            showOptionCredentialExists = false;
+                            optMsg = none;
                             Item::allItems[listItemIdx].childItemVector.push_back(tObj);
                             Item::SerealizeItems(Item::allItems);
-                            showOptionCredentialCreated = true;
+                            optMsg = created;
                         }
                         else {
-                            showOptionCredentialExists = true;
-                            showOptionCredentialCreated = false;
+                            optMsg = exists;
                         }
                     }
                     else {
-                        showOptionEnterCorrectNum = true;
+                        optMsg = reEnter;
                     }
                 }
                 ImGui::SameLine();
                 if (ImGui::Button("Close")) {
                     createOptionPopUp = false;
-                    showOptionIsDeleted = false;
-                    showOptionCredentialExists = false;
-                    showOptionCredentialCreated = false;
+                    optMsg = none;
                 }
                 //ImGui::SameLine();
-                switch (itemMessage) {
-                    case alreadyExists
-                }
-                if (showOptionCredentialExists) {
+                if (optMsg == exists) {
                     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Option already exists");
                 }
                 //ImGui::SameLine();
-                if (showOptionCredentialCreated) {
+                if (optMsg == created) {
                     ImGui::TextColored(ImVec4(0.18f, 1.0f, 0.0f, 1.0f), "Option created");
                 }
                 //ImGui::SameLine();
-                if (showOptionIsDeleted) {
+                if (optMsg == deleted) {
                     ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Option Deleted");
                 }
                 //ImGui::SameLine();
-                if (showOptionEnterCorrectNum) {
+                if (optMsg == reEnter) {
                     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Please enter price correctly");
                 }
             }
 
-            ImGui::BeginGroup();
-            ImGui::SameLine();
             if (ImGui::Button("Delete Option")) {
                 //Delete selected Option from disk and memory.
                 if (Item::allItems[listItemIdx].childItemVector.size() != 0) {
                 Item::allItems[listItemIdx].childItemVector.erase(Item::allItems[listItemIdx].childItemVector.begin() + listSubItemIdx);
                 Item::SerealizeItems(Item::allItems);
-                listSubItemIdx -= 1;
-                showOptionIsDeleted = true;
+                listSubItemIdx > 0 ? listSubItemIdx -= 1 : listSubItemIdx = listSubItemIdx;
+                optMsg = deleted;
                 }
             }
-            ImGui::EndGroup();
             ImGui::EndChild();
         }
         ImGui::End();
